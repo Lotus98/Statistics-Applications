@@ -7,15 +7,17 @@
         // Main components
         public Rectangle rect;
         public PictureBox pictureBox;
+        public Color rectColor;
         // Content
-        //public DynamicDrawing drawing;
+        public DynamicDrawing drawing;
 
         // Variables needed for Mouse control
         private Point mouseP;
 
 
-        public DynamicRectangle(Rectangle rect, PictureBox pictureBox) {
+        public DynamicRectangle(Rectangle rect, PictureBox pictureBox, Color rectColor) {
             this.rect = rect;
+            this.rectColor = rectColor;
             this.pictureBox = pictureBox;
             // Binds the handlers for the pictureBox
             BindControls();
@@ -30,14 +32,12 @@
         public void Draw(Graphics gfx) {
 
             // Draw resized content
-            //if (!(drawing == null)) {
-            //    drawing.ResizeDraw(gfx, this.rect);
-            //}
-            //else {
-            //    gfx.DrawRectangle(Pens.Black, this.rect);
-            //}            
-            gfx.DrawRectangle(Pens.Black, this.rect);
-
+            if (drawing != null) {
+                drawing.ResizeDraw(gfx, this.rect);
+            }
+            else {
+                gfx.DrawRectangle(Pens.Black, this.rect);
+            }
         }
 
         private void MouseDownHandler(object sender, MouseEventArgs e) {
