@@ -7,3 +7,7 @@ Each directory contains the code of the developed application, Inside it there m
 
 ## Release section
 In the Release section can be found ZIP files that contain the folders with the full project, comprehensive of the compiled binaries.
+
+### Notes
+Yes, I know tags and releases are completely messed up, it is okay, this is not an actual software project.
+I just use this space to upload online some individual applications, and have a place where code is actually readable online.
