@@ -13,13 +13,13 @@ namespace StatisticsLib {
         // Scaling factor for each column height
         private double scaleFactor;
         private bool vertical;
+        private int fontSize = 20;
 
         // Utils to draw
-        SolidBrush brush1 = new SolidBrush(Color.Green);
-        SolidBrush brush2 = new SolidBrush(Color.Lime);
+        private SolidBrush brush1 = new SolidBrush(Color.Green);
+        private SolidBrush brush2 = new SolidBrush(Color.Lime);
 
-
-        public Histogram(ContinuousDistribution distribution, bool vertical) {
+         public Histogram(ContinuousDistribution distribution, bool vertical) {
             this.distribution = distribution;
             this.vertical = vertical;
             InitHisto();
@@ -28,91 +28,132 @@ namespace StatisticsLib {
 
         // Methods
         private void InitHisto() {
-            foreach (Interval i in distribution.intervals) {
-                if (i.Count > max) max = i.Count;
-            }
+            max = distribution.intervals.Max(i => i.Count);
         }
 
         public override void Draw(Graphics gfx) {
-            if (vertical) DrawVertical(gfx);
-            else DrawHorizontal(gfx);
+            DrawHistogram(gfx, vertical);
         }
 
-        private void DrawHorizontal(Graphics gfx) {
+        private void DrawHistogram(Graphics gfx, bool isVertical) {
+            Rectangle histogramArea = new Rectangle(drawingArea.Location, drawingArea.Size);
             int colsNum, colWidth;
             bool dark = true;
 
+            // Adjust histogram area to leave space for the labels
+            histogramArea.X += fontSize;
+            histogramArea.Width -= fontSize;
+            histogramArea.Height -= fontSize;
+
             // Calculate Scaling factor
-            scaleFactor = (double)drawingArea.Height / (double)max;
+            scaleFactor = isVertical ? (double)histogramArea.Width / (double)max : (double)histogramArea.Height / (double)max;
 
             // Get cols and width
             colsNum = distribution.intervals.Count;
-            colWidth = drawingArea.Width / colsNum;
+            colWidth = isVertical ? histogramArea.Height / colsNum : histogramArea.Width / colsNum;
 
-            // Create rectangle to draw the histogram columns ==> Initially y and height are not correct
-            Rectangle column = new Rectangle(drawingArea.X, drawingArea.Y, colWidth, drawingArea.Height);
+            // Create rectangle to draw the histogram columns ==> Initially x, y, width, and height are not correct
+            Rectangle column = isVertical
+                ? new Rectangle(histogramArea.X, histogramArea.Y,  histogramArea.Width, colWidth)
+                : new Rectangle(histogramArea.X, histogramArea.Bottom, colWidth, histogramArea.Height);
 
-            foreach (Interval i in distribution.intervals) {
-                int colHeight = (int)Math.Round(i.Count * scaleFactor);
-                int d = drawingArea.Height - colHeight;
-                column.Height = colHeight;
-                column.Y += d;
-                if (dark) {
-                    gfx.FillRectangle(brush1, column);
-                    dark = !dark;
+            foreach (Interval i in distribution.intervals)
+            {
+                int colSize = (int)Math.Round(i.Count * scaleFactor);
+
+                if (isVertical)
+                {
+                    column.Width = colSize;
                 }
-                else {
-                    gfx.FillRectangle(brush2, column);
-                    dark = !dark;
+                else
+                {
+                    column.Height = colSize;
+                    column.Y += histogramArea.Height - colSize;
                 }
-                gfx.DrawRectangle(Pens.Black, column);
 
-                // Draw mean line
-                int meanX = column.X + (int)((i.Mean.Avg - i.lowerEnd) / i.intervalSize);
-                Point top = new Point(meanX, column.Y);
-                Point bot = new Point(meanX, column.Bottom);
-                gfx.DrawLine(Pens.Red, top, bot);
+                drawColumn(gfx, column, dark);
+                dark = !dark;
 
-                // Reset position for next column
-                column.X += colWidth;
-                column.Y = drawingArea.Y;
+                //// Draw mean line
+                //int meanPos = isVertical
+                //    ? column.Y + (int)((i.Mean.Avg - i.lowerEnd) / i.intervalSize)
+                //    : column.X + (int)((i.Mean.Avg - i.lowerEnd) / i.intervalSize);
+                //Point start = isVertical ? new Point(meanPos, column.X) : new Point(column.Y, meanPos);
+                //Point end = isVertical ? new Point(meanPos, column.Right) : new Point(column.Bottom, meanPos);
+                //gfx.DrawLine(Pens.Red, start, end);
+
+                // Reset position for the next column
+                if (isVertical)
+                {
+                    column.Y += colWidth;
+                }
+                else
+                {
+                    column.X += colWidth;
+                    column.Y = histogramArea.Y;
+                }
             }
+
+            // Draw labels
+            drawLabels(gfx, histogramArea, isVertical);
         }
 
-        private void DrawVertical(Graphics gfx) {
-            int rowsNum, rowHeight;
-            bool dark = true;
+        private void drawColumn(Graphics gfx, Rectangle column, bool dark) {
+            SolidBrush brush = dark ? brush1 : brush2;
+            gfx.FillRectangle(brush, column);
+            gfx.DrawRectangle(Pens.Black, column);
+        }
 
-            // Calculate Scaling factor
-            scaleFactor = (double)drawingArea.Width / (double)max;
+        private void drawLabels(Graphics gfx, Rectangle histogramArea, bool isVertical) {
+            // the number of values in the distribution
+            int n = distribution.intervals.Sum(i => i.Count);
+            int intervalStep = distribution.intervals.Count / 10;
+            double maxRelFreq = (double)max / (double)n;
 
-            // Get cols and width
-            rowsNum = distribution.intervals.Count;
-            rowHeight = drawingArea.Height / rowsNum;
+            // Draw vertical axis
+            gfx.DrawLine(Pens.Black, histogramArea.Location, new Point(histogramArea.X, drawingArea.Bottom));
+            // Draw horizontal axis
+            gfx.DrawLine(Pens.Black, new Point(drawingArea.X, histogramArea.Bottom), new Point(drawingArea.Right, histogramArea.Bottom));
 
-            // Create rectangle to draw the histogram columns ==> Initially the width is not correct
-            Rectangle column = new Rectangle(drawingArea.X, drawingArea.Bottom - rowHeight, drawingArea.Width, rowHeight);
+            // Divide each axis in 10 parts
+            int xStep = histogramArea.Width / 10;
+            int yStep = histogramArea.Height / 10;
 
-            foreach (Interval i in distribution.intervals) {
-                column.Width = (int)Math.Round(i.Count * scaleFactor);
-                if (dark) {
-                    gfx.FillRectangle(brush1, column);
-                    dark = !dark;
+            // Draw x axis ticks and labels
+            for (int i = 0; i < 10; i++)
+            {
+                int x = histogramArea.X + i * xStep;
+                int y = histogramArea.Bottom;
+                gfx.DrawLine(Pens.Black, new Point(x, y), new Point(x, y + 5));
+                if (isVertical)
+                {
+                    // Print the relative frequency
+                    gfx.DrawString($"{maxRelFreq/10.0 * i:F2}", new Font("Arial", fontSize - 10), Brushes.Black, new Point(x - 15, y + 5));
                 }
-                else {
-                    gfx.FillRectangle(brush2, column);
-                    dark = !dark;
+                else
+                {
+                    // Print the lower end of the interval
+                    gfx.DrawString($"{distribution.intervals[i * intervalStep].lowerEnd:F2}", new Font("Arial", fontSize - 10), Brushes.Black, new Point(x - 15, y + 5));
                 }
-                gfx.DrawRectangle(Pens.Black, column);
+            }
 
-                // Draw mean line
-                int meanY = column.Y + (int)((i.Mean.Avg - i.lowerEnd) / i.intervalSize);
-                Point top = new Point(column.X, meanY);
-                Point bot = new Point(column.Right, meanY);
-                gfx.DrawLine(Pens.Red, top, bot);
-
-                // Reset position for next column
-                column.Y -= rowHeight;
+            // Draw y axis ticks and labels
+            for (int i = 0; i < 10; i++)
+            {
+                int x = histogramArea.X;
+                int y = histogramArea.Bottom - i * yStep;
+                gfx.DrawLine(Pens.Black, new Point(x, y), new Point(x - 5, y));
+                if (isVertical)
+                {
+                    // Print the lower end of the interval
+                    gfx.DrawString($"{distribution.intervals[i * intervalStep].lowerEnd:F2}", new Font("Arial", fontSize - 10), Brushes.Black, new Point(x - 15, y - 15));
+                    
+                }
+                else
+                {
+                    // Print the relative frequency
+                    gfx.DrawString($"{maxRelFreq/10.0 * i:F2}", new Font("Arial", fontSize - 10), Brushes.Black, new Point(x - 15, y - 15));
+                }
             }
         }
 
