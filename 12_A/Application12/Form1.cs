@@ -45,7 +45,7 @@ namespace Application12 {
             points = new List<PointF>();
 
             // Initialize the distributions
-            xDist = new ContinuousDistribution("xDist", -MAX_RADIUS, MAX_RADIUS, 20);
+            xDist = new ContinuousDistribution("xDist", -MAX_RADIUS, MAX_RADIUS, 10);
             yDist = new ContinuousDistribution("yDist", -MAX_RADIUS, MAX_RADIUS, 20);
 
             for (int i = 0; i < n; i++)
@@ -54,11 +54,15 @@ namespace Application12 {
                 double radius = rand.NextDouble() * MAX_RADIUS;
                 double angle = rand.NextDouble() * 2 * Math.PI;
 
+                // Get polar coordinates of the points, these will be inserted into the distributions
+                float rawX = (float)(radius * Math.Cos(angle));
+                float rawY = (float)(radius * Math.Sin(angle));
+
                 // Convert the polar coordinates to cartesian coordinates with respect to the center of the picture box
-                float x = (float)(radius * Math.Cos(angle) + center.X);
-                float y = (float)(radius * Math.Sin(angle) + center.Y);
-                xDist.InsertInList(x);
-                yDist.InsertInList(y);
+                float x = rawX + center.X;
+                float y = rawY + center.Y;
+                xDist.InsertInList(rawX);
+                yDist.InsertInList(rawY);
 
                 points.Add(new PointF(x, y));
             }
