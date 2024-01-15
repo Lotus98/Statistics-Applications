@@ -2,8 +2,8 @@ using StatisticsLib;
 
 namespace Application13 {
     public partial class Form1 : Form {
-        private RandomNormal xRand = new RandomNormal(10, 1);
-        private RandomNormal yRand = new RandomNormal(10, 1);
+        private RandomNormal xRand = new RandomNormal(0, 1);
+        private RandomNormal yRand = new RandomNormal(0, 1);
         private DynamicRectangle dynRect;
         private Histogram xHist, x2Hist, xyHist, xy2Hist, x2y2Hist;
         private ContinuousDistribution xDist, x2Dist, xyDist, xy2Dist, x2y2Dist;
@@ -16,17 +16,17 @@ namespace Application13 {
             dynRect = new DynamicRectangle(new Rectangle(new Point(0,0), pictureBox.Size), pictureBox, Color.Black);
 
             // Initialize distributions
-            xDist = new ContinuousDistribution("X", 10, 0.1);
-            x2Dist = new ContinuousDistribution("X²", 10, 1);
-            xyDist = new ContinuousDistribution("XY", 10, 0.05);
-            xy2Dist = new ContinuousDistribution("XY²", 10, 0.02);
-            x2y2Dist = new ContinuousDistribution("X²Y²", 10, 0.05);
+            xDist = new ContinuousDistribution("X", 0, 0.1);
+            x2Dist = new ContinuousDistribution("X²", 0, 0.1);
+            xyDist = new ContinuousDistribution("XY", 0, 1);
+            xy2Dist = new ContinuousDistribution("XY²", 0, 50);
+            x2y2Dist = new ContinuousDistribution("X²Y²", 0, 10);
 
             // Generate distributions
             generateDist();
 
             // Initialize histograms
-            xHist = new Histogram(xDist, true);
+            xHist = new Histogram(xDist, false);
             x2Hist = new Histogram(x2Dist, false);
             xyHist = new Histogram(xyDist, false);
             xy2Hist = new Histogram(xy2Dist, false);
@@ -47,7 +47,7 @@ namespace Application13 {
         }
 
         private void generateDist() {
-            for (int i = 0; i < 10000; i++)
+            for (int i = 0; i < 2000; i++)
             {
                 double x = xRand.Next();
                 double y = yRand.Next();
