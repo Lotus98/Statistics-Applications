@@ -31,7 +31,7 @@ namespace Application11 {
 
             // Initialize distributions
             bernoulli_distrib = new ContinuousDistribution("Bernoulli", 0, n, 1);
-            interarrivals_distrib = new ContinuousDistribution("Interarrivals", 0, n, 1);
+            interarrivals_distrib = new ContinuousDistribution("Interarrivals", 0, 0.1);
 
             if (lambda > n)
             {
@@ -42,16 +42,31 @@ namespace Application11 {
             // Generate samples
             for (int i = 0; i<m; i++)
             {
-                int bernoulliSum = 0;
+                List<int> bernoulliSequence = new List<int>();
                 // Generate bernoulli trials
                 for (int j = 0; j<n; j++)
                 {
                     int success = rand.NextDouble() < prob ? 1 : 0;
-                    bernoulliSum += success;
+                    bernoulliSequence.Add(success);
                 }
-                bernoulli_distrib.InsertInList(bernoulliSum);
-                double interarrival_time = 1.0 / lambda * (n - bernoulliSum);
-                interarrivals_distrib.InsertInList(interarrival_time);
+                bernoulli_distrib.InsertInList(bernoulliSequence.Sum());
+
+                List<double> interarrivalTimes = new List<double>();
+                for (int j = 1; j < bernoulliSequence.Count; j++)
+                {
+                    if (bernoulliSequence[j] == 1 && bernoulliSequence[j - 1] == 1)
+                    {
+                        // Consecutive successes found, calculate interarrival time
+                        double interarrival_time = j * (1.0 / lambda);
+                        interarrivalTimes.Add(interarrival_time);
+                    }
+                }
+
+                // Insert interarrival times into the distribution
+                foreach (var time in interarrivalTimes)
+                {
+                    interarrivals_distrib.InsertInList(time);
+                }
             }
 
             // Initialize histograms

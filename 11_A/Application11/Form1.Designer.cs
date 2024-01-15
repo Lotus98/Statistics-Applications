@@ -148,7 +148,7 @@
             Controls.Add(picturebox);
             Controls.Add(paramsGroupBox);
             Name = "Form1";
-            Text = "Form1";
+            Text = "[A11] Application 11";
             Load += Form1_Load;
             ((System.ComponentModel.ISupportInitialize)num_samples).EndInit();
             ((System.ComponentModel.ISupportInitialize)samples_size).EndInit();
