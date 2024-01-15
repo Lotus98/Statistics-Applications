@@ -9,7 +9,7 @@ namespace StatisticsLib {
     public class Histogram : DynamicDrawing {
         // Data
         private ContinuousDistribution distribution;
-        private int max = 0;
+        private int max = 0, total = 0;
         // Scaling factor for each column height
         private double scaleFactor;
         private bool vertical;
@@ -27,8 +27,25 @@ namespace StatisticsLib {
 
 
         // Methods
+        private void TrimTails() {
+            int threshold = total / 500;
+            // Identify and trim left tail
+            while (distribution.intervals.Count > 0 && distribution.intervals.First().Count < threshold)
+            {
+                distribution.intervals.RemoveAt(0);
+            }
+
+            // Identify and trim right tail
+            while (distribution.intervals.Count > 0 && distribution.intervals.Last().Count < threshold)
+            {
+                distribution.intervals.RemoveAt(distribution.intervals.Count - 1);
+            }
+        }
+
         private void InitHisto() {
+            total = distribution.intervals.Sum(i => i.Count);
             max = distribution.intervals.Max(i => i.Count);
+            TrimTails();
         }
 
         public override void Draw(Graphics gfx) {
@@ -55,7 +72,7 @@ namespace StatisticsLib {
             // Create rectangle to draw the histogram columns ==> Initially x, y, width, and height are not correct
             Rectangle column = isVertical
                 ? new Rectangle(histogramArea.X, histogramArea.Y,  histogramArea.Width, colWidth)
-                : new Rectangle(histogramArea.X, histogramArea.Bottom, colWidth, histogramArea.Height);
+                : new Rectangle(histogramArea.X, histogramArea.Y, colWidth, histogramArea.Height);
 
             foreach (Interval i in distribution.intervals)
             {
@@ -68,7 +85,7 @@ namespace StatisticsLib {
                 else
                 {
                     column.Height = colSize;
-                    column.Y += histogramArea.Height - colSize;
+                    column.Y = histogramArea.Height - colSize;
                 }
 
                 drawColumn(gfx, column, dark);
